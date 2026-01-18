@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, render_template_string
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -317,10 +317,6 @@ def register():
     )
     db.session.add(profile)
     db.session.commit()
-    
-    # Auto-login after registration
-    session['user_id'] = user.id
-    session['email'] = user.email
     
     return jsonify({
         'success': True,
@@ -752,7 +748,6 @@ def admin_dashboard():
             transform: translateX(-5px);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -800,9 +795,6 @@ def admin_dashboard():
             </div>
 
             <div class="tab-content" id="surveys-tab">
-                <div class="chart-container" style="position: relative; height: 300px; margin-bottom: 30px;">
-                    <canvas id="surveyChart"></canvas>
-                </div>
                 <input type="text" class="search-box" id="searchSurveys" placeholder="🔍 Search surveys...">
                 <div id="surveysContent">
                     <div class="loading">
@@ -831,16 +823,10 @@ def admin_dashboard():
         let allChallenges = [];
 
         function switchTab(tabName) {
-            // Remove active class from all tabs
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            // Remove active class from all tab contents
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            // Add active class to clicked button
-            const activeButton = Array.from(document.querySelectorAll('.tab')).find(t => t.innerText.toLowerCase().includes(tabName));
-            if (activeButton) activeButton.classList.add('active');
-            
-            // Show content
+            event.target.classList.add('active');
             document.getElementById(tabName + '-tab').classList.add('active');
         }
 
@@ -900,57 +886,16 @@ def admin_dashboard():
             content.innerHTML = html;
         }
 
-        let surveyChart = null;
-
         async function loadSurveys() {
             try {
                 const response = await fetch('/api/admin/surveys');
                 const data = await response.json();
                 allSurveys = data.surveys || [];
                 displaySurveys(allSurveys);
-                updateSurveyChart(allSurveys);
             } catch (error) {
                 console.error('Error loading surveys:', error);
                 document.getElementById('surveysContent').innerHTML = '<div class="empty-state">Error loading surveys</div>';
             }
-        }
-
-        function updateSurveyChart(surveys) {
-            const ctx = document.getElementById('surveyChart').getContext('2d');
-            
-            // Count Question 1 responses (Motivation)
-            const counts = {};
-            surveys.forEach(s => {
-                const answer = s.question_1 || 'No Answer';
-                counts[answer] = (counts[answer] || 0) + 1;
-            });
-            
-            const labels = Object.keys(counts);
-            const data = Object.values(counts);
-            
-            if (surveyChart) {
-                surveyChart.destroy();
-            }
-            
-            surveyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Motivation Factors (Q1)',
-                        data: data,
-                        backgroundColor: '#667eea',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                    }
-                }
-            });
         }
 
         function displaySurveys(surveys) {
@@ -1187,74 +1132,36 @@ def init_db():
                     domain='Web Development',
                     difficulty='Medium',
                     deadline='Jan 25, 2026',
-                    status='Active'
+                    status='Continue Challenge'
                 ),
                 Challenge(
                     title='Data Science & ML Pipeline',
                     company='DataMinds AI',
                     domain='Machine Learning',
                     difficulty='Hard',
-                    deadline='Feb 01, 2026',
-                    status='Start'
+                    deadline='Feb 1, 2026',
+                    status='Start Challenge'
                 ),
                 Challenge(
                     title='React Component Library Design',
                     company='DesignHub',
-                    domain='Frontend Dev',
+                    domain='Frontend Development',
                     difficulty='Easy',
                     deadline='Jan 30, 2026',
-                    status='Completed'
+                    status='View Details'
                 )
             ]
-            for challenge in challenges:
-                db.session.add(challenge)
+            db.session.add_all(challenges)
             db.session.commit()
-            print("✅ Initial challenges created!")
+            print("✅ Sample challenges added!")
+        
+        print("\n🚀 Server is ready!")
+        print("📍 Main Dashboard: http://127.0.0.1:5000")
+        print("📍 Registration: http://127.0.0.1:5000/register-page")
+        print("📍 Admin Panel: http://127.0.0.1:5000/admin")
+        print("\n")
 
-# --- Generic Routes for Navigation ---
-@app.route('/organizations')
-def organizations():
-    return render_template_string(generic_page_template, title="For Organizations", content="Partner with us to find top talent.")
-
-@app.route('/careers')
-def careers():
-    category = request.args.get('cat', 'General')
-    return render_template_string(generic_page_template, title=f"Careers: {category}", content=f"Explore opportunities in {category}.")
-
-@app.route('/community')
-def community():
-    return render_template_string(generic_page_template, title="Community", content="Join our vibrant community of learners.")
-
-@app.route('/more')
-def more():
-    return render_template_string(generic_page_template, title="More", content="More resources and links coming soon.")
-
-# Generic Template for these pages
-generic_page_template = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - SkillVerify</title>
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-        h1 { font-size: 3rem; margin-bottom: 20px; background: linear-gradient(135deg, #fff 0%, #667eea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        p { color: rgba(255,255,255,0.7); font-size: 1.2rem; margin-bottom: 40px; }
-        a { color: white; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 8px; transition: all 0.3s; }
-        a:hover { background: rgba(255,255,255,0.1); }
-    </style>
-</head>
-<body>
-    <div>
-        <h1>{{ title }}</h1>
-        <p>{{ content }}</p>
-        <a href="/">← Back to Dashboard</a>
-    </div>
-</body>
-</html>
-"""
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
