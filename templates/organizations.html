@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>For Organizations - SkillVerify</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
     <style>
         * {
             margin: 0;
@@ -573,6 +574,266 @@
                 display: none;
             }
         }
+
+        /* Calendar & Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .booking-modal {
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .booking-modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: white;
+        }
+
+        .modal-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Calendar */
+        .calendar-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .current-month {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .month-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .month-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .calendar-day:hover:not(.empty) {
+            background: rgba(102, 126, 234, 0.2);
+            color: white;
+        }
+
+        .calendar-day.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.empty {
+            cursor: default;
+        }
+
+        /* Time Slots */
+        .time-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            overflow-y: auto;
+            max-height: 300px;
+            padding-right: 5px;
+        }
+
+        .time-slot {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-slot:hover {
+            border-color: #667eea;
+            color: white;
+        }
+
+        .time-slot.selected {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .confirm-btn {
+            margin-top: auto;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .confirm-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #333;
+        }
+
+        /* Success Popup */
+        .success-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: #1a1a2e;
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            z-index: 2001;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            display: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .success-popup.active {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+            animation: bounce 1s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body>
@@ -584,7 +845,8 @@
     <nav class="top-nav">
         <a href="/" class="brand">Skill<span>Verify</span></a>
         <div class="nav-links">
-            <a href="/">Home</a>
+            <a href="/">Dashboard</a>
+            <a href="/organizations" style="color: white; font-weight: 600;">For Organizations</a>
             <a href="/careers">Careers</a>
             <a href="/community">Community</a>
             <a href="/contact">Contact</a>
@@ -788,8 +1050,174 @@
         </div>
     </footer>
 
+    <!-- Booking Modal -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="booking-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Schedule a Demo</h3>
+                <button class="close-modal" id="closeBooking">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Calendar Section -->
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <span class="current-month" id="currentMonth">October 2026</span>
+                        <div class="month-nav">
+                            <button class="month-btn" id="prevMonth">‹</button>
+                            <button class="month-btn" id="nextMonth">›</button>
+                        </div>
+                    </div>
+                    <div class="weekdays">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+
+                <!-- Time & Actions -->
+                <div class="time-section">
+                    <h4 class="section-subtitle">Available Times</h4>
+                    <div class="time-slots" id="timeSlots">
+                        <!-- JS will populate this -->
+                        <div class="time-slot" style="grid-column: span 2; padding: 20px; opacity: 0.5;">
+                            Select a date to view available times
+                        </div>
+                    </div>
+                    <button class="confirm-btn" id="confirmBooking" disabled>Confirm Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Popup -->
+    <div class="success-popup" id="successPopup">
+        <div class="success-icon">🎉</div>
+        <h3 style="color: white; margin-bottom: 10px;">Booking Confirmed!</h3>
+        <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">We've sent a confirmation email to your inbox.</p>
+        <button class="btn-primary" onclick="closeSuccessPopup()" style="min-width: 150px;">Awesome!</button>
+    </div>
+
+
+    <!-- Chatbot Modal -->
+    <button class="chatbot-toggler">
+        <span class="material-symbols-rounded">💬</span>
+        <span class="material-symbols-rounded">close</span>
+    </button>
+    <div class="chatbot">
+        <header>
+            <h2>Chat AI</h2>
+            <span class="close-btn material-symbols-rounded">close</span>
+        </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="material-symbols-rounded">smart_toy</span>
+                <p>Hi there 👋<br>How can I help you regarding career guidance or SkillVerify today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Enter a message..." spellcheck="false" required></textarea>
+            <span id="send-btn" class="material-symbols-rounded">send</span>
+        </div>
+    </div>
+    
+    <!-- Google Fonts for Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
+
     <script>
-        // Smooth scroll
+        // --- Chatbot Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+             const chatbotToggler = document.querySelector(".chatbot-toggler");
+             const closeBtn = document.querySelector(".close-btn");
+             const chatbox = document.querySelector(".chatbox");
+             const chatInput = document.querySelector(".chat-input textarea");
+             const sendChatBtn = document.querySelector(".chat-input span");
+
+             let userMessage = null; 
+             const inputInitHeight = chatInput.scrollHeight;
+
+             const createChatLi = (message, className) => {
+                 const chatLi = document.createElement("li");
+                 chatLi.classList.add("chat", className);
+                 let chatContent = className === "outgoing" ? `<p></p>` : `<span class="material-symbols-rounded">smart_toy</span><p></p>`;
+                 chatLi.innerHTML = chatContent;
+                 chatLi.querySelector("p").textContent = message;
+                 return chatLi; 
+             }
+
+             const generateResponse = (chatElement) => {
+                 const API_URL = "/api/chat";
+                 const messageElement = chatElement.querySelector("p");
+
+                 const requestOptions = {
+                     method: "POST",
+                     headers: {
+                         "Content-Type": "application/json",
+                     },
+                     body: JSON.stringify({
+                         message: userMessage
+                     })
+                 }
+
+                 fetch(API_URL, requestOptions).then(res => res.json()).then(data => {
+                     messageElement.textContent = data.message;
+                 }).catch(() => {
+                     messageElement.classList.add("error");
+                     messageElement.textContent = "Oops! Something went wrong. Please try again.";
+                 }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+             }
+
+             const handleChat = () => {
+                 userMessage = chatInput.value.trim(); 
+                 if(!userMessage) return;
+
+                 chatInput.value = "";
+                 chatInput.style.height = `${inputInitHeight}px`;
+
+                 chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+                 chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                 setTimeout(() => {
+                     const incomingChatLi = createChatLi("Thinking...", "incoming");
+                     chatbox.appendChild(incomingChatLi);
+                     chatbox.scrollTo(0, chatbox.scrollHeight);
+                     generateResponse(incomingChatLi);
+                 }, 600);
+             }
+
+             chatInput.addEventListener("input", () => {
+                 chatInput.style.height = `${inputInitHeight}px`;
+                 chatInput.style.height = `${chatInput.scrollHeight}px`;
+             });
+
+             chatInput.addEventListener("keydown", (e) => {
+                 if(e.key === "Enter" && !e.shiftKey && window.innerWidth > 800) {
+                     e.preventDefault();
+                     handleChat();
+                 }
+             });
+
+             sendChatBtn.addEventListener("click", handleChat);
+             closeBtn.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
+             chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+             
+             // Close chatbot when clicking the toggler updates the body class
+             chatbotToggler.addEventListener("click", () => {
+                 const chatbot = document.querySelector(".chatbot");
+                 const toggler = document.querySelector(".chatbot-toggler");
+                 chatbot.classList.toggle("show-chatbot");
+                 toggler.classList.toggle("show-chatbot");
+             });
+             
+             closeBtn.addEventListener("click", () => {
+                 const chatbot = document.querySelector(".chatbot");
+                 const toggler = document.querySelector(".chatbot-toggler");
+                 chatbot.classList.remove("show-chatbot");
+                 toggler.classList.remove("show-chatbot");
+             });
+        });
+    
+        // Booking Modal Logic
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -800,18 +1228,148 @@
             });
         });
 
-        // Button interactions
+        // Calendar Logic
+        const bookingModal = document.getElementById('bookingModal');
+        const closeBookingBtn = document.getElementById('closeBooking');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const currentMonthEl = document.getElementById('currentMonth');
+        const timeSlotsEl = document.getElementById('timeSlots');
+        const confirmBtn = document.getElementById('confirmBooking');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const successPopup = document.getElementById('successPopup');
+
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+
+        const months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        // Open Modal
         document.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', function() {
-                if (this.textContent.includes('Demo')) {
-                    alert('Demo scheduling form would open here!\n\nIn production, this would connect to a calendar booking system.');
+                if (this.textContent.includes('Schedule a Demo')) {
+                    bookingModal.classList.add('active');
+                    renderCalendar();
                 } else if (this.textContent.includes('Sales') || this.textContent.includes('Contact')) {
-                    alert('Contact form would open here!\n\nIn production, this would open a contact form or redirect to a sales page.');
+                    // Logic for other buttons can remain alert or redirect
+                     window.location.href = "/contact";
                 } else if (this.textContent.includes('Get Started')) {
-                    alert('Registration flow would start here!\n\nIn production, this would begin the organization onboarding process.');
+                     alert('Registration flow would start here!');
                 }
             });
         });
+
+        // Close Modal
+        closeBookingBtn.addEventListener('click', () => {
+            bookingModal.classList.remove('active');
+        });
+
+        bookingModal.addEventListener('click', (e) => {
+            if (e.target === bookingModal) {
+                bookingModal.classList.remove('active');
+            }
+        });
+
+        // Render Calendar
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            currentMonthEl.textContent = `${months[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            calendarGrid.innerHTML = '';
+
+            // Empty slots for previous month
+            for (let i = 0; i < firstDay; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.classList.add('calendar-day', 'empty');
+                calendarGrid.appendChild(emptySlot);
+            }
+
+            // Days
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.classList.add('calendar-day');
+                dayEl.textContent = i;
+
+                // Check if selected
+                if (selectedDate && 
+                    selectedDate.getDate() === i && 
+                    selectedDate.getMonth() === month && 
+                    selectedDate.getFullYear() === year) {
+                    dayEl.classList.add('selected');
+                }
+
+                dayEl.addEventListener('click', () => {
+                    selectedDate = new Date(year, month, i);
+                    renderCalendar(); // Re-render to show selection
+                    renderTimeSlots();
+                });
+
+                calendarGrid.appendChild(dayEl);
+            }
+        }
+
+        // Render Time Slots
+        function renderTimeSlots() {
+            timeSlotsEl.innerHTML = '';
+            selectedTime = null;
+            confirmBtn.disabled = true;
+
+            const times = [
+                "09:00 AM", "10:00 AM", "11:00 AM", 
+                "01:00 PM", "02:30 PM", "04:00 PM"
+            ];
+
+            // Randomly disable some slots to simulate unavailability
+            times.forEach(time => {
+                const slot = document.createElement('div');
+                slot.classList.add('time-slot');
+                slot.textContent = time;
+
+                slot.addEventListener('click', () => {
+                    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                    slot.classList.add('selected');
+                    selectedTime = time;
+                    confirmBtn.disabled = false;
+                });
+
+                timeSlotsEl.appendChild(slot);
+            });
+        }
+
+        // Navigation
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Booking Confirmation
+        confirmBtn.addEventListener('click', () => {
+            bookingModal.classList.remove('active');
+            successPopup.classList.add('active');
+            
+            // Reset for next time
+            selectedDate = null;
+            selectedTime = null;
+            confirmBtn.disabled = true;
+        });
+
+        window.closeSuccessPopup = function() {
+            successPopup.classList.remove('active');
+        }
     </script>
 </body>
 </html>

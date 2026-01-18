@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkillVerify - Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
     <style>
         * {
             margin: 0;
@@ -2039,8 +2040,126 @@
         </div>
     </div>
     
+
+    <!-- Chatbot Modal -->
+    <button class="chatbot-toggler">
+        <span class="material-symbols-rounded">💬</span>
+        <span class="material-symbols-rounded">close</span>
+    </button>
+    <div class="chatbot">
+        <header>
+            <h2>Chat AI</h2>
+            <span class="close-btn material-symbols-rounded">close</span>
+        </header>
+        <ul class="chatbox">
+            <li class="chat incoming">
+                <span class="material-symbols-rounded">smart_toy</span>
+                <p>Hi there 👋<br>How can I help you regarding career guidance or SkillVerify today?</p>
+            </li>
+        </ul>
+        <div class="chat-input">
+            <textarea placeholder="Enter a message..." spellcheck="false" required></textarea>
+            <span id="send-btn" class="material-symbols-rounded">send</span>
+        </div>
+    </div>
+    
+    <!-- Google Fonts for Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
+
     <script>
-        // Floating Orbs Animation
+        // --- Chatbot Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+             const chatbotToggler = document.querySelector(".chatbot-toggler");
+             const closeBtn = document.querySelector(".close-btn");
+             const chatbox = document.querySelector(".chatbox");
+             const chatInput = document.querySelector(".chat-input textarea");
+             const sendChatBtn = document.querySelector(".chat-input span");
+
+             let userMessage = null; 
+             const inputInitHeight = chatInput.scrollHeight;
+
+             const createChatLi = (message, className) => {
+                 const chatLi = document.createElement("li");
+                 chatLi.classList.add("chat", className);
+                 let chatContent = className === "outgoing" ? `<p></p>` : `<span class="material-symbols-rounded">smart_toy</span><p></p>`;
+                 chatLi.innerHTML = chatContent;
+                 chatLi.querySelector("p").textContent = message;
+                 return chatLi; 
+             }
+
+             const generateResponse = (chatElement) => {
+                 const API_URL = "/api/chat";
+                 const messageElement = chatElement.querySelector("p");
+
+                 const requestOptions = {
+                     method: "POST",
+                     headers: {
+                         "Content-Type": "application/json",
+                     },
+                     body: JSON.stringify({
+                         message: userMessage
+                     })
+                 }
+
+                 fetch(API_URL, requestOptions).then(res => res.json()).then(data => {
+                     messageElement.textContent = data.message;
+                 }).catch(() => {
+                     messageElement.classList.add("error");
+                     messageElement.textContent = "Oops! Something went wrong. Please try again.";
+                 }).finally(() => chatbox.scrollTo(0, chatbox.scrollHeight));
+             }
+
+             const handleChat = () => {
+                 userMessage = chatInput.value.trim(); 
+                 if(!userMessage) return;
+
+                 chatInput.value = "";
+                 chatInput.style.height = `${inputInitHeight}px`;
+
+                 chatbox.appendChild(createChatLi(userMessage, "outgoing"));
+                 chatbox.scrollTo(0, chatbox.scrollHeight);
+
+                 setTimeout(() => {
+                     const incomingChatLi = createChatLi("Thinking...", "incoming");
+                     chatbox.appendChild(incomingChatLi);
+                     chatbox.scrollTo(0, chatbox.scrollHeight);
+                     generateResponse(incomingChatLi);
+                 }, 600);
+             }
+
+             chatInput.addEventListener("input", () => {
+                 chatInput.style.height = `${inputInitHeight}px`;
+                 chatInput.style.height = `${chatInput.scrollHeight}px`;
+             });
+
+             chatInput.addEventListener("keydown", (e) => {
+                 if(e.key === "Enter" && !e.shiftKey && window.innerWidth > 800) {
+                     e.preventDefault();
+                     handleChat();
+                 }
+             });
+
+             sendChatBtn.addEventListener("click", handleChat);
+             closeBtn.addEventListener("click", () => document.body.classList.remove("show-chatbot"));
+             chatbotToggler.addEventListener("click", () => document.body.classList.toggle("show-chatbot"));
+             
+             // Close chatbot when clicking the toggler updates the body class
+             chatbotToggler.addEventListener("click", () => {
+                 const chatbot = document.querySelector(".chatbot");
+                 const toggler = document.querySelector(".chatbot-toggler");
+                 chatbot.classList.toggle("show-chatbot");
+                 toggler.classList.toggle("show-chatbot");
+             });
+             
+             closeBtn.addEventListener("click", () => {
+                 const chatbot = document.querySelector(".chatbot");
+                 const toggler = document.querySelector(".chatbot-toggler");
+                 chatbot.classList.remove("show-chatbot");
+                 toggler.classList.remove("show-chatbot");
+             });
+        });
+
+        // --- Shared Authentication Logic ---
         const orbs = document.querySelectorAll('.floating-orb');
         orbs.forEach(orb => {
             animateOrb(orb);
